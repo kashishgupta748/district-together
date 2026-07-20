@@ -179,8 +179,8 @@ com.district.together
 
 ## 👥 Developers 
 
-  Kashish Gupta
-  Amit Sharma
+  Kashish Gupta,
+  Amit Sharma,
   Saurabh Mishra
 
 ---
