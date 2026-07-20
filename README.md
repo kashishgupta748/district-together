@@ -177,16 +177,11 @@ com.district.together
 
 ---
 
-## 👥 Collaborators (Demo Data)
+## 👥 Developers 
 
-The app ships with a demo group of four friends:
-
-| Initial | Name | Color |
-|---------|------|-------|
-| K | Kashish | Pink `#ec4899` |
-| S | Saurabh | Purple `#7c5cfc` |
-| A | Arjun | Teal `#22d3a5` |
-| R | Riya | Amber `#fbbf24` |
+  Kashish Gupta
+  Amit Sharma
+  Saurabh Mishra
 
 ---
 
