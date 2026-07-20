@@ -1,0 +1,15 @@
+name: DistrictTogether
+options:
+  bundleIdPrefix: com.district
+targets:
+  DistrictTogether:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.district.together
+        SWIFT_VERSION: "5.9"
+        INFOPLIST_FILE: Sources/Info.plist

@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>District Together — Group Trip OS</title>
+  <meta name="description" content="District Together: AI-powered group trip planner that reconciles different interests into one shared, day-by-day itinerary.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0a0a0f;--surface:#111118;--card:#16161f;--card-hover:#1c1c28;
+      --border:rgba(255,255,255,0.07);--border-light:rgba(255,255,255,0.12);
+      --accent:#7c5cfc;--accent-2:#c084fc;--accent-glow:rgba(124,92,252,0.35);
+      --green:#22d3a5;--green-dim:rgba(34,211,165,0.15);
+      --red:#f87171;--red-dim:rgba(248,113,113,0.15);--amber:#fbbf24;
+      --text-1:#f4f4f8;--text-2:#9898b0;--text-3:#5c5c74;
+      --font:'Inter',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{font-size:16px}
+    body{font-family:var(--font);background:var(--bg);color:var(--text-1);min-height:100vh;overflow-x:hidden}
+    button{cursor:pointer;border:none;background:none;font-family:inherit}
+    img{display:block;object-fit:cover}
+
+    .app-shell{display:grid;grid-template-columns:1fr 380px;min-height:100vh}
+
+    /* LEFT PANE */
+    .left-pane{display:flex;flex-direction:column;padding:40px 44px;border-right:1px solid var(--border);overflow-y:auto;max-height:100vh}
+    .left-pane::-webkit-scrollbar{width:4px}
+    .left-pane::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:99px}
+
+    .brand-row{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+    .brand-logo{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent-2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 24px var(--accent-glow);flex-shrink:0}
+    .brand-label{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--accent)}
+    .brand-name{font-size:22px;font-weight:800;color:var(--text-1);line-height:1}
+    .brand-tagline{font-size:13.5px;color:var(--text-2);font-style:italic;margin-bottom:28px}
+
+    .step-dots{display:flex;align-items:center;gap:6px;margin-bottom:24px}
+    .step-dot{width:30px;height:4px;border-radius:99px;background:var(--border-light);transition:all .3s}
+    .step-dot.active{background:var(--accent);width:46px}
+    .step-dot.done{background:var(--green)}
+
+    .guide-panel{background:var(--card);border:1px solid var(--border-light);border-radius:20px;padding:24px 26px;margin-bottom:22px;position:relative;overflow:hidden}
+    .guide-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+    .step-badge{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);background:rgba(124,92,252,.12);padding:4px 10px;border-radius:99px;margin-bottom:14px}
+    .guide-title{font-size:17px;font-weight:700;margin-bottom:8px}
+    .guide-desc{font-size:13.5px;color:var(--text-2);line-height:1.65}
+    .guide-nav{display:flex;gap:10px;margin-top:20px}
+    .btn-prev{padding:9px 20px;border-radius:99px;font-size:13px;font-weight:600;color:var(--text-2);border:1px solid var(--border-light);transition:all .2s}
+    .btn-prev:disabled{opacity:.35;cursor:not-allowed}
+    .btn-next{flex:1;padding:9px 20px;border-radius:99px;font-size:13px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;transition:all .2s;box-shadow:0 4px 16px var(--accent-glow)}
+    .btn-next:hover{transform:translateY(-1px);box-shadow:0 6px 24px var(--accent-glow)}
+
+    .ai-panel{background:var(--card);border:1px solid var(--border-light);border-radius:20px;display:flex;flex-direction:column;flex:1;min-height:400px;max-height:520px;overflow:hidden}
+    .ai-panel-header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border)}
+    .ai-avatar-glow{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 0 14px var(--accent-glow);flex-shrink:0}
+    .ai-panel-title{font-size:14px;font-weight:700}
+    .ai-status{font-size:11px;color:var(--green);display:flex;align-items:center;gap:5px}
+    .ai-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+
+    .chat-log{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+    .chat-log::-webkit-scrollbar{width:3px}
+    .chat-log::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:99px}
+
+    .chat-bubble{max-width:88%;font-size:13px;line-height:1.6;border-radius:16px;padding:10px 14px}
+    .chat-bubble.system{align-self:center;background:rgba(255,255,255,.04);color:var(--text-3);font-size:11px;border-radius:8px;text-align:center;max-width:100%}
+    .chat-bubble.ai{align-self:flex-start;background:var(--card-hover);border:1px solid var(--border);color:var(--text-1);border-bottom-left-radius:4px;animation:slide-up .25s ease}
+    .chat-bubble.user{align-self:flex-end;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-bottom-right-radius:4px;animation:slide-up .2s ease}
+    .ai-tag{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+
+    @keyframes slide-up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+    .mood-section{padding:12px 18px;border-top:1px solid var(--border);background:var(--surface)}
+    .mood-label{font-size:10.5px;color:var(--text-3);font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px}
+    .mood-pills{display:flex;gap:7px;flex-wrap:wrap}
+    .mood-pill{font-size:12px;font-weight:600;padding:5px 13px;border-radius:99px;border:1px solid var(--border-light);color:var(--text-2);transition:all .2s;background:transparent}
+    .mood-pill:hover,.mood-pill.active{border-color:var(--accent);color:var(--accent);background:rgba(124,92,252,.1)}
+
+    .chat-input-row{display:flex;gap:10px;align-items:center;padding:12px 14px;border-top:1px solid var(--border);background:var(--card)}
+    .chat-input{flex:1;background:var(--surface);border:1px solid var(--border-light);border-radius:99px;padding:9px 16px;font-size:13px;color:var(--text-1);font-family:var(--font);outline:none;transition:border-color .2s}
+    .chat-input:focus{border-color:var(--accent)}
+    .chat-input::placeholder{color:var(--text-3)}
+    .send-btn{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#fff;transition:transform .2s;box-shadow:0 4px 12px var(--accent-glow);flex-shrink:0}
+    .send-btn:hover{transform:scale(1.08)}
+
+    /* TYPING */
+    .typing{display:flex;gap:5px;align-items:center;padding:10px 14px}
+    .typing span{width:7px;height:7px;border-radius:50%;background:var(--text-3);animation:bounce 1.2s infinite}
+    .typing span:nth-child(2){animation-delay:.2s}
+    .typing span:nth-child(3){animation-delay:.4s}
+    @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-7px)}}
+
+    /* RIGHT PANE */
+    .right-pane{background:linear-gradient(160deg,#0f0f1a 0%,#0a0a0f 100%);display:flex;align-items:center;justify-content:center;padding:24px 20px;position:sticky;top:0;height:100vh;overflow:hidden}
+    .right-pane::before{content:'';position:absolute;width:300px;height:400px;border-radius:50%;background:radial-gradient(ellipse,rgba(124,92,252,.18) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+
+    .phone-wrap{position:relative;width:316px;height:672px}
+    .phone-frame{width:100%;height:100%;background:linear-gradient(160deg,#1e1e2e,#12121c);border-radius:44px;border:2px solid rgba(255,255,255,.12);box-shadow:0 0 0 1px rgba(255,255,255,.05) inset,0 40px 80px rgba(0,0,0,.7),0 0 60px rgba(124,92,252,.12);overflow:hidden;display:flex;flex-direction:column;position:relative}
+
+    .dynamic-island{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:116px;height:33px;background:#000;border-radius:99px;z-index:10}
+
+    .status-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 22px 6px;font-size:11.5px;font-weight:600;color:var(--text-1);flex-shrink:0;padding-top:54px}
+    .status-icons{display:flex;align-items:center;gap:5px;font-size:13px}
+
+    .app-header{display:flex;align-items:center;justify-content:space-between;padding:10px 18px 12px;flex-shrink:0}
+    .back-btn{color:var(--accent);font-size:13px;font-weight:600;display:flex;align-items:center;gap:4px}
+    .header-center{text-align:center}
+    .header-dest{font-size:18px;font-weight:800;letter-spacing:-.3px}
+    .header-sub{font-size:10.5px;color:var(--text-3);margin-top:1px}
+    .header-right-icons{display:flex;gap:10px;color:var(--text-2)}
+
+    .phone-filter-row{display:flex;gap:8px;padding:0 18px 12px;flex-shrink:0}
+    .phone-filter-pill{font-size:12px;font-weight:600;padding:6px 14px;border-radius:99px;color:var(--text-2);background:var(--card);border:1px solid var(--border);transition:all .2s}
+    .phone-filter-pill.active{background:var(--text-1);color:#000;border-color:transparent}
+
+    .phone-screen{flex:1;overflow-y:auto;padding:0 14px 90px;scroll-behavior:smooth}
+    .phone-screen::-webkit-scrollbar{display:none}
+
+    /* Hero Collage */
+    .hero-collage{width:100%;height:164px;border-radius:14px;overflow:hidden;margin-bottom:14px;display:grid;grid-template-columns:55% 45%;grid-template-rows:55% 45%;gap:3px;background:var(--card)}
+    .hero-img-main{grid-row:1/3;background:linear-gradient(135deg,#3b2a6e,#1e1433);display:flex;align-items:center;justify-content:center;font-size:40px}
+    .hero-img-2,.hero-img-3{background:linear-gradient(135deg,#2a1e5c,#16112b);display:flex;align-items:center;justify-content:center;font-size:22px}
+
+    .hero-info-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;padding:0 2px}
+    .hero-city{font-size:22px;font-weight:800}
+    .hero-avatars{display:flex;align-items:center}
+    .hero-avatars .av{width:28px;height:28px;border-radius:50%;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);margin-left:-8px}
+    .hero-avatars .av:first-child{margin-left:0}
+    .av-k{background:linear-gradient(135deg,#f472b6,#ec4899)}
+    .av-s{background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+    .av-a{background:linear-gradient(135deg,var(--green),#10b981)}
+    .av-r{background:linear-gradient(135deg,var(--amber),#f59e0b)}
+    .av-add{background:var(--card);border:1.5px dashed var(--border-light) !important;color:var(--text-3)}
+    .hero-collabs{font-size:11px;color:var(--text-3);padding:0 2px;margin-bottom:12px}
+
+    .sort-row{display:flex;align-items:center;justify-content:space-between;padding:0 2px 12px;font-size:11.5px;color:var(--text-3)}
+
+    /* Day Section */
+    .day-section{margin-bottom:4px}
+    .day-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:0 2px}
+    .day-label{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-2)}
+    .day-date{font-size:10.5px;color:var(--text-3)}
+    .day-line{flex:1;height:1px;background:var(--border)}
+    .day-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:rgba(124,92,252,.12);color:var(--accent)}
+
+    /* Trip Card */
+    .trip-card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+    .trip-card.confirmed{border-color:rgba(34,211,165,.25)}
+    .trip-card.has-conflict{border-color:rgba(248,113,113,.25)}
+
+    .card-top{display:flex;gap:11px;padding:12px 12px 0;align-items:flex-start}
+    .card-thumb-wrap{position:relative;flex-shrink:0}
+    .card-thumb{width:58px;height:58px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px}
+    .thumb-owner{position:absolute;bottom:-5px;right:-5px;width:19px;height:19px;border-radius:50%;font-size:8px;font-weight:800;color:#fff;border:2px solid var(--card);display:flex;align-items:center;justify-content:center}
+    .card-info{flex:1;min-width:0}
+    .card-tag{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3);margin-bottom:3px}
+    .card-name{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+    .card-meta-line{font-size:10.5px;color:var(--text-3);display:flex;align-items:center;gap:4px}
+    .card-dot{width:2.5px;height:2.5px;border-radius:50%;background:var(--text-3);flex-shrink:0}
+    .card-time-tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:99px;background:rgba(124,92,252,.12);color:var(--accent);margin-top:5px}
+    .card-menu-btn{color:var(--text-3);padding:4px;flex-shrink:0}
+
+    /* Vote Row */
+    .card-vote-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px 0}
+
+    /* YES cluster — who said yes */
+    .yes-cluster{display:flex;align-items:center;gap:6px}
+    .yes-avatars{display:flex;align-items:center}
+    .yes-av{width:21px;height:21px;border-radius:50%;font-size:8.5px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--card);margin-left:-5px}
+    .yes-av:first-child{margin-left:0}
+    .yes-label{font-size:11px;color:var(--green);font-weight:700}
+    .no-voters{font-size:10px;color:var(--red);font-weight:600}
+
+    .vote-btns{display:flex;gap:6px}
+    .v-btn{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:5px 11px;border-radius:99px;border:1.5px solid var(--border-light);color:var(--text-2);transition:all .2s}
+    .v-btn.yes-active{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+    .v-btn.no-active{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+
+    /* Conflict row */
+    .conflict-row{margin:8px 12px 0;display:flex;align-items:center;gap:7px;background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.2);border-radius:8px;padding:6px 10px;font-size:10.5px;color:var(--red)}
+
+    /* Footer */
+    .card-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 11px}
+    .card-author{font-size:10.5px;color:var(--text-3)}
+    .confirmed-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--green);background:var(--green-dim);border-radius:99px;padding:3px 8px}
+    .alt-btn{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;border:1.5px solid var(--accent);color:var(--accent);background:rgba(124,92,252,.06);transition:all .2s}
+
+    /* Phone FABs */
+    .phone-fab{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:7px;padding:11px 22px;border-radius:99px;background:var(--text-1);color:#000;font-size:12.5px;font-weight:800;box-shadow:0 8px 28px rgba(0,0,0,.5);z-index:20;transition:transform .2s;white-space:nowrap}
+    .sparkle-fab{position:absolute;bottom:20px;right:16px;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 8px 24px var(--accent-glow);z-index:20;animation:pulse-glow 2.5s ease-in-out infinite}
+    @keyframes pulse-glow{0%,100%{box-shadow:0 8px 24px var(--accent-glow)}50%{box-shadow:0 8px 36px rgba(192,132,252,.55)}}
+
+    @media(max-width:780px){.app-shell{grid-template-columns:1fr}.right-pane{display:none}.left-pane{padding:28px 24px;max-height:unset}}
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- LEFT PANE -->
+  <main class="left-pane">
+
+    <div class="brand-row">
+      <div class="brand-logo">✈️</div>
+      <div>
+        <div class="brand-label">District Together</div>
+        <div class="brand-name">District Together</div>
+      </div>
+    </div>
+    <p class="brand-tagline">One trip. Different interests. One shared plan.</p>
+
+    <div class="step-dots" id="step-dots"></div>
+
+    <div class="guide-panel">
+      <div class="step-badge" id="step-badge">Step 1 of 6</div>
+      <h2 class="guide-title" id="guide-title">Pick a vibe, get a plan</h2>
+      <p class="guide-desc" id="guide-desc">Each person has District AI in their pocket. Choose a mood or type a request — AI builds day-wise suggestions that fit everyone's schedule and taste automatically.</p>
+      <div class="guide-nav">
+        <button class="btn-prev" id="prev-btn" disabled>← Back</button>
+        <button class="btn-next" id="next-btn">Next →</button>
+      </div>
+    </div>
+
+    <div class="ai-panel">
+      <div class="ai-panel-header">
+        <div class="ai-avatar-glow">S</div>
+        <div style="flex:1">
+          <div class="ai-panel-title">Saurabh's AI Assistant</div>
+          <div class="ai-status">online · private to you</div>
+        </div>
+      </div>
+      <div class="chat-log" id="chat-log">
+        <div class="chat-bubble system">🔒 This chat is private to you. Suggestions you like get proposed to the group.</div>
+      </div>
+      <div class="mood-section">
+        <div class="mood-label">Quick mood</div>
+        <div class="mood-pills">
+          <button class="mood-pill" onclick="selectMood('Creative',this)">🎨 Creative</button>
+          <button class="mood-pill" onclick="selectMood('Adventurous',this)">🌋 Adventurous</button>
+          <button class="mood-pill" onclick="selectMood('Relaxed',this)">💆 Relaxed</button>
+          <button class="mood-pill" onclick="selectMood('Hungry',this)">🍽️ Hungry</button>
+          <button class="mood-pill" onclick="selectMood('Party',this)">🎉 Party</button>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chat-input" type="text" placeholder="Ask District AI anything…" autocomplete="off">
+        <button class="send-btn" onclick="sendChat()">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- RIGHT PANE — PHONE -->
+  <aside class="right-pane">
+    <div class="phone-wrap">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+
+        <div class="status-bar">
+          <span>22:34</span>
+          <div class="status-icons">
+            <svg viewBox="0 0 24 24" width="13" height="13"><path fill="currentColor" d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+            <svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+          </div>
+        </div>
+
+        <div class="app-header">
+          <button class="back-btn">
+            <svg viewBox="0 0 24 24" width="15" height="15"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            Back
+          </button>
+          <div class="header-center">
+            <div class="header-dest">Jaipur</div>
+            <div class="header-sub">9 items · 3 days</div>
+          </div>
+          <div class="header-right-icons">
+            <svg viewBox="0 0 24 24" width="19" height="19"><path fill="currentColor" d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+            <svg viewBox="0 0 24 24" width="19" height="19"><path fill="currentColor" d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+          </div>
+        </div>
+
+        <div class="phone-filter-row">
+          <button class="phone-filter-pill active" onclick="setFilter(this,'all')">All</button>
+          <button class="phone-filter-pill" onclick="setFilter(this,'restaurant')">Restaurants</button>
+          <button class="phone-filter-pill" onclick="setFilter(this,'activity')">Activities</button>
+        </div>
+
+        <div class="phone-screen" id="phone-screen">
+
+          <!-- Hero -->
+          <div class="hero-collage">
+            <div class="hero-img-main">🏯</div>
+            <div class="hero-img-2">🎨</div>
+            <div class="hero-img-3">🍛</div>
+          </div>
+          <div class="hero-info-row">
+            <div class="hero-city">Jaipur</div>
+            <div class="hero-avatars">
+              <div class="av av-k">K</div>
+              <div class="av av-s">S</div>
+              <div class="av av-a">A</div>
+              <div class="av av-r">R</div>
+              <div class="av av-add">+</div>
+            </div>
+          </div>
+          <div class="hero-collabs">4 collaborators · Jul 18–20</div>
+          <div class="sort-row">
+            <span>↕ Sort: <strong>Day &amp; Time</strong></span>
+            <svg viewBox="0 0 24 24" width="13" height="13"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>
+          </div>
+
+          <!-- ── DAY 1 ── -->
+          <div class="day-section">
+            <div class="day-header">
+              <span class="day-label">Day 1</span>
+              <span class="day-date">Fri 18 Jul</span>
+              <div class="day-line"></div>
+              <span class="day-badge">3 items</span>
+            </div>
+
+            <!-- Amber Fort — 3 yes -->
+            <div class="trip-card confirmed" id="card-amber">
+              <div class="card-top">
+                <div class="card-thumb-wrap">
+                  <div class="card-thumb" style="background:linear-gradient(135deg,#92400e,#78350f)">🏯</div>
+                  <div class="thumb-owner av-s">S</div>
+                </div>
+                <div class="card-info">
+                  <div class="card-tag">⚡ Activity · Day 1</div>
+                  <div class="card-name">Amber Fort Exploration</div>
+                  <div class="card-meta-line">
+                    <span>11:30 AM – 2:00 PM</span><span class="card-dot"></span><span>11 km</span>
+                  </div>
+                  <div class="card-time-tag">⏱ 2.0 hours</div>
+                </div>
+                <button class="card-menu-btn">···</button>
+              </div>
+              <div class="card-vote-row">
+                <div class="yes-cluster">
+                  <div class="yes-avatars">
+                    <div class="yes-av av-s">S</div>
+                    <div class="yes-av av-k">K</div>
+                    <div class="yes-av av-a">A</div>
+                  </div>
+                  <span class="yes-label">✓ Saurabh, Kashish, Arjun</span>
+                </div>
+              </div>
+              <div class="card-vote-row" style="padding-top:6px">
+                <div></div>
+                <div class="vote-btns">
+                  <button class="v-btn yes-active" onclick="vote(this,'amber','yes')">👍 3</button>
+                  <button class="v-btn" onclick="vote(this,'amber','no')">👎 1</button>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="card-author">by Saurabh · Just now</span>
+                <button class="alt-btn">＋ Alt</button>
+              </div>
+            </div>
+
+            <!-- Hawa Mahal — All In -->
+            <div class="trip-card confirmed" id="card-hawa">
+              <div class="card-top">
+                <div class="card-thumb-wrap">
+                  <div class="card-thumb" style="background:linear-gradient(135deg,#7c3aed,#5b21b6)">🌺</div>
+                  <div class="thumb-owner av-k">K</div>
+                </div>
+                <div class="card-info">
+                  <div class="card-tag">⚡ Activity · Day 1</div>
+                  <div class="card-name">Hawa Mahal Palace</div>
+                  <div class="card-meta-line">
+                    <span>3:00 PM – 4:30 PM</span><span class="card-dot"></span><span>2.5 km</span>
+                  </div>
+                  <div class="card-time-tag">⏱ 1.5 hours</div>
+                </div>
+                <button class="card-menu-btn">···</button>
+              </div>
+              <div class="card-vote-row">
+                <div class="yes-cluster">
+                  <div class="yes-avatars">
+                    <div class="yes-av av-k">K</div>
+                    <div class="yes-av av-s">S</div>
+                    <div class="yes-av av-r">R</div>
+                    <div class="yes-av av-a">A</div>
+                  </div>
+                  <span class="yes-label">🔥 Everyone's in!</span>
+                </div>
+              </div>
+              <div class="card-vote-row" style="padding-top:6px">
+                <span class="confirmed-badge">✓ Confirmed</span>
+                <div class="vote-btns">
+                  <button class="v-btn yes-active" onclick="vote(this,'hawa','yes')">👍 4</button>
+                  <button class="v-btn" onclick="vote(this,'hawa','no')">👎 0</button>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="card-author">by Kashish · 1h ago</span>
+              </div>
+            </div>
+
+            <!-- Chokhi Dhani — Conflict -->
+            <div class="trip-card has-conflict" id="card-chokhi">
+              <div class="card-top">
+                <div class="card-thumb-wrap">
+                  <div class="card-thumb" style="background:linear-gradient(135deg,#065f46,#064e3b)">🍛</div>
+                  <div class="thumb-owner av-s">S</div>
+                </div>
+                <div class="card-info">
+                  <div class="card-tag">🍽 Restaurant · Day 1</div>
+                  <div class="card-name">Chokhi Dhani Dinner</div>
+                  <div class="card-meta-line">
+                    <span>7:00 PM – 10:00 PM</span><span class="card-dot"></span><span>4.5 km</span>
+                  </div>
+                </div>
+                <button class="card-menu-btn">···</button>
+              </div>
+              <div class="conflict-row">
+                <svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+                Riya prefers an earlier dinner · See alternatives
+              </div>
+              <div class="card-vote-row">
+                <div class="yes-cluster">
+                  <div class="yes-avatars">
+                    <div class="yes-av av-s">S</div>
+                    <div class="yes-av av-k">K</div>
+                  </div>
+                  <span class="yes-label">✓ Saurabh, Kashish</span>
+                </div>
+              </div>
+              <div class="card-vote-row" style="padding-top:6px">
+                <span class="no-voters">✗ Arjun, Riya</span>
+                <div class="vote-btns">
+                  <button class="v-btn yes-active" onclick="vote(this,'chokhi','yes')">👍 2</button>
+                  <button class="v-btn no-active" onclick="vote(this,'chokhi','no')">👎 2</button>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="card-author">by Saurabh · 28m ago</span>
+                <button class="alt-btn">＋ Alt</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── DAY 2 ── -->
+          <div class="day-section">
+            <div class="day-header">
+              <span class="day-label">Day 2</span>
+              <span class="day-date">Sat 19 Jul</span>
+              <div class="day-line"></div>
+              <span class="day-badge">3 items</span>
+            </div>
+
+            <!-- Nahargarh Sunrise -->
+            <div class="trip-card" id="card-nahargarh">
+              <div class="card-top">
+                <div class="card-thumb-wrap">
+                  <div class="card-thumb" style="background:linear-gradient(135deg,#92400e,#b45309)">🌅</div>
+                  <div class="thumb-owner av-a">A</div>
+                </div>
+                <div class="card-info">
+                  <div class="card-tag">⚡ Activity · Day 2</div>
+                  <div class="card-name">Nahargarh Sunrise Trek</div>
+                  <div class="card-meta-line">
+                    <span>5:30 AM – 8:00 AM</span><span class="card-dot"></span><span>6.2 km</span>
+                  </div>
+                  <div class="card-time-tag">⏱ 2.5 hours</div>
+                </div>
+                <button class="card-menu-btn">···</button>
+              </div>
+              <div class="card-vote-row">
+                <div class="yes-cluster">
+                  <div class="yes-avatars">
+                    <div class="yes-av av-a">A</div>
+                    <div class="yes-av av-s">S</div>
+                  </div>
+                  <span class="yes-label">✓ Arjun, Saurabh</span>
+                </div>
+              </div>
+              <div class="card-vote-row" style="padding-top:6px">
+                <div></div>
+                <div class="vote-btns">
+                  <button class="v-btn yes-active" onclick="vote(this,'nahargarh','yes')">👍 2</button>
+                  <button class="v-btn" onclick="vote(this,'nahargarh','no')">👎 1</button>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="card-author">by Arjun · 3h ago</span>
+                <button class="alt-btn">＋ Alt</button>
+              </div>
+            </div>
+
+            <!-- Blue Pottery — All In -->
+            <div class="trip-card confirmed" id="card-pottery">
+              <div class="card-top">
+                <div class="card-thumb-wrap">
+                  <div class="card-thumb" style="background:linear-gradient(135deg,#1e3a8a,#1d4ed8)">🎨</div>
+                  <div class="thumb-owner av-r">R</div>
+                </div>
+                <div class="card-info">
+                  <div class="card-tag">🎨 Creative · Day 2</div>
+                  <div class="card-name">Blue Pottery Workshop</div>
+                  <div class="card-meta-line">
+                    <span>10:00 AM – 12:30 PM</span><span class="card-dot"></span><span>3.1 km</span>
+                  </div>
+                  <div class="card-time-tag">⏱ 2.5 hours</div>
+                </div>
+                <button class="card-menu-btn">···</button>
+              </div>
+              <div class="card-vote-row">
+                <div class="yes-cluster">
+                  <div class="yes-avatars">
+                    <div class="yes-av av-r">R</div>
+                    <div class="yes-av av-k">K</div>
+                    <div class="yes-av av-a">A</div>
+                    <div class="yes-av av-s">S</div>
+                  </div>
+                  <span class="yes-label">🔥 Everyone's in!</span>
+                </div>
+              </div>
+              <div class="card-vote-row" style="padding-top:6px">
+                <span class="confirmed-badge">✓ Confirmed</span>
+                <div class="vote-btns">
+                  <button class="v-btn yes-active" onclick="vote(this,'pottery','yes')">👍 4</button>
+                  <button class="v-btn" onclick="vote(this,'pottery','no')">👎 0</button>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="card-author">by Riya · 5h ago</span>
+              </div>
+            </div>
+
+            <!-- MikeNmix -->
+            <div class="trip-card" id="card-mikenmix">
+              <div class="card-top">
+                <div class="card-thumb-wrap">
+                  <div class="card-thumb" style="background:linear-gradient(135deg,#4c1d95,#6d28d9)">🎵</div>
+                  <div class="thumb-owner av-s">S</div>
+                </div>
+                <div class="card-info">
+                  <div class="card-tag">🎉 Event · Day 2</div>
+                  <div class="card-name">MikeNmix by Prats</div>
+                  <div class="card-meta-line">
+                    <span>8:30 PM – 11:00 PM</span><span class="card-dot"></span><span>2.5 km</span>
+                  </div>
+                </div>
+                <button class="card-menu-btn">···</button>
+              </div>
+              <div class="card-vote-row">
+                <div class="yes-cluster">
+                  <div class="yes-avatars">
+                    <div class="yes-av av-s">S</div>
+                    <div class="yes-av av-r">R</div>
+                  </div>
+                  <span class="yes-label">✓ Saurabh, Riya</span>
+                </div>
+              </div>
+              <div class="card-vote-row" style="padding-top:6px">
+                <div></div>
+                <div class="vote-btns">
+                  <button class="v-btn yes-active" onclick="vote(this,'mikenmix','yes')">👍 2</button>
+                  <button class="v-btn" onclick="vote(this,'mikenmix','no')">👎 0</button>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="card-author">by Saurabh · 2h ago</span>
+                <button class="alt-btn">＋ Alt</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── DAY 3 ── -->
+          <div class="day-section">
+            <div class="day-header">
+              <span class="day-label">Day 3</span>
+              <span class="day-date">Sun 20 Jul</span>
+              <div class="day-line"></div>
+              <span class="day-badge">2 items</span>
+            </div>
+
+            <!-- City Palace — All In -->
+            <div class="trip-card confirmed" id="card-palace">
+              <div class="card-top">
+                <div class="card-thumb-wrap">
+                  <div class="card-thumb" style="background:linear-gradient(135deg,#7f1d1d,#991b1b)">🏛️</div>
+                  <div class="thumb-owner av-k">K</div>
+                </div>
+                <div class="card-info">
+                  <div class="card-tag">⚡ Activity · Day 3</div>
+                  <div class="card-name">City Palace Tour</div>
+                  <div class="card-meta-line">
+                    <span>10:00 AM – 1:00 PM</span><span class="card-dot"></span><span>1.8 km</span>
+                  </div>
+                  <div class="card-time-tag">⏱ 3 hours</div>
+                </div>
+                <button class="card-menu-btn">···</button>
+              </div>
+              <div class="card-vote-row">
+                <div class="yes-cluster">
+                  <div class="yes-avatars">
+                    <div class="yes-av av-k">K</div>
+                    <div class="yes-av av-s">S</div>
+                    <div class="yes-av av-a">A</div>
+                    <div class="yes-av av-r">R</div>
+                  </div>
+                  <span class="yes-label">🔥 Everyone's in!</span>
+                </div>
+              </div>
+              <div class="card-vote-row" style="padding-top:6px">
+                <span class="confirmed-badge">✓ Confirmed</span>
+                <div class="vote-btns">
+                  <button class="v-btn yes-active" onclick="vote(this,'palace','yes')">👍 4</button>
+                  <button class="v-btn" onclick="vote(this,'palace','no')">👎 0</button>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="card-author">by Kashish · Yesterday</span>
+              </div>
+            </div>
+
+            <!-- Tonino Farewell -->
+            <div class="trip-card" id="card-tonino">
+              <div class="card-top">
+                <div class="card-thumb-wrap">
+                  <div class="card-thumb" style="background:linear-gradient(135deg,#064e3b,#065f46)">🍝</div>
+                  <div class="thumb-owner av-k">K</div>
+                </div>
+                <div class="card-info">
+                  <div class="card-tag">🍽 Restaurant · Day 3</div>
+                  <div class="card-name">Tonino · Farewell Dinner</div>
+                  <div class="card-meta-line">
+                    <span>7:30 PM – 10:00 PM</span><span class="card-dot"></span><span>4.4 ★ · 3.7 km</span>
+                  </div>
+                </div>
+                <button class="card-menu-btn">···</button>
+              </div>
+              <div class="card-vote-row">
+                <div class="yes-cluster">
+                  <div class="yes-avatars">
+                    <div class="yes-av av-k">K</div>
+                    <div class="yes-av av-r">R</div>
+                  </div>
+                  <span class="yes-label">✓ Kashish, Riya</span>
+                </div>
+              </div>
+              <div class="card-vote-row" style="padding-top:6px">
+                <div></div>
+                <div class="vote-btns">
+                  <button class="v-btn yes-active" onclick="vote(this,'tonino','yes')">👍 2</button>
+                  <button class="v-btn" onclick="vote(this,'tonino','no')">👎 0</button>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="card-author">by Kashish · 28m ago</span>
+                <button class="alt-btn">＋ Alt</button>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /phone-screen -->
+
+        <button class="phone-fab">
+          <svg viewBox="0 0 24 24" width="15" height="15"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          Add items
+        </button>
+        <div class="sparkle-fab">✨</div>
+
+      </div><!-- /phone-frame -->
+    </div><!-- /phone-wrap -->
+  </aside>
+</div><!-- /app-shell -->
+
+<script>
+const steps=[
+  {title:"Pick a vibe, get a plan",desc:"Each person has District AI in their pocket — private and personal. Choose a mood or type a request. AI builds suggestions that fit everyone's schedule and taste, organized day by day.",highlight:null},
+  {title:"Day-wise itinerary — auto structured",desc:"District organizes every suggestion into Day 1, Day 2, Day 3 sections with times, distances, and durations. No more scattered group chats. Everything in one clean, chronological view.",highlight:"card-amber"},
+  {title:"See exactly who said YES",desc:"Every card clearly shows which friends voted in — their avatar AND their name. At a glance you know: 'Hawa Mahal → Everyone's in!' vs where you still need to convince people.",highlight:"card-hawa"},
+  {title:"AI spots conflicts before they happen",desc:"When two people have incompatible timing or preferences, District flags it instantly with a red border and a plain-English explanation — and offers alternatives right there.",highlight:"card-chokhi"},
+  {title:"Propose & vote without group pressure",desc:"Anyone can propose an item. Others vote privately (no social pressure). Once enough people say YES, the item gets confirmed and locked into the shared day-by-day plan.",highlight:"card-pottery"},
+  {title:"One shared plan. Zero friction.",desc:"The result is one beautiful, day-by-day itinerary that everyone sees. This is the collaborative group trip OS that District is missing — and the feature that makes every trip actually happen.",highlight:null},
+];
+let cur=0;
+
+function buildDots(){
+  const el=document.getElementById('step-dots');
+  el.innerHTML='';
+  steps.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='step-dot'+(i<cur?' done':(i===cur?' active':''));
+    el.appendChild(d);
+  });
+}
+
+function renderStep(){
+  const s=steps[cur];
+  document.getElementById('step-badge').textContent=`Step ${cur+1} of ${steps.length}`;
+  document.getElementById('guide-title').textContent=s.title;
+  document.getElementById('guide-desc').textContent=s.desc;
+  document.getElementById('prev-btn').disabled=cur===0;
+  document.getElementById('next-btn').textContent=cur===steps.length-1?'🎉 Done':'Next →';
+  buildDots();
+  document.querySelectorAll('.trip-card,.day-section').forEach(c=>{c.style.outline='';c.style.outlineOffset='';});
+  if(s.highlight){
+    const el=document.getElementById(s.highlight);
+    if(el){
+      el.style.outline='2px solid rgba(124,92,252,0.7)';
+      el.style.outlineOffset='2px';
+      setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+    }
+  }
+}
+
+document.getElementById('next-btn').addEventListener('click',()=>{if(cur<steps.length-1){cur++;renderStep();}});
+document.getElementById('prev-btn').addEventListener('click',()=>{if(cur>0){cur--;renderStep();}});
+renderStep();
+
+function vote(btn,id,dir){
+  const card=btn.closest('.trip-card');
+  const [yBtn,nBtn]=card.querySelectorAll('.v-btn');
+  const prev=vote._state&&vote._state[id];
+  if(!vote._state)vote._state={};
+  if(prev===dir){vote._state[id]=null;yBtn.classList.remove('yes-active');nBtn.classList.remove('no-active');}
+  else{vote._state[id]=dir;if(dir==='yes'){yBtn.classList.add('yes-active');nBtn.classList.remove('no-active');}else{nBtn.classList.add('no-active');yBtn.classList.remove('yes-active');}}
+}
+
+function setFilter(btn,type){
+  document.querySelectorAll('.phone-filter-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.trip-card').forEach(card=>{
+    const tag=card.querySelector('.card-tag').textContent.toLowerCase();
+    if(type==='all')card.style.display='';
+    else if(type==='restaurant')card.style.display=tag.includes('restaurant')?'':'none';
+    else card.style.display=(tag.includes('activity')||tag.includes('creative')||tag.includes('event'))?'':'none';
+  });
+}
+
+const aiR={
+  Creative:["🎨 For a creative afternoon in Jaipur, I found the Blue Pottery Workshop on Day 2 (10 AM–12:30 PM, 3.1 km). It's already in the plan and Riya proposed it — all 4 of you are in! Want me to look for more creative options?"],
+  Adventurous:["🌋 Nahargarh Sunrise Trek on Day 2 morning (5:30–8 AM) is already in the plan. Arjun and Saurabh said YES. I can nudge Kashish and Riya to vote. Or want me to find another adventure activity?"],
+  Relaxed:["💆 For a slower pace, Jantar Mantar gardens at 4 PM on Day 1 fits perfectly after Hawa Mahal — only 1.2 km away, quiet and shaded. Want me to add it to Day 1?"],
+  Hungry:["🍽️ Hungry? I can find a lunch spot for Day 1 afternoon. Tapri Central on MI Road is 4.3★, 1.8 km from Hawa Mahal, open till 10 PM. Or want a full group dinner option?"],
+  Party:["🎉 MikeNmix by Prats is already locked for Day 2 night (Saurabh + Riya). I also found Ounce rooftop bar — 4.4★, 2.1 km, open till midnight. Want me to add it as Day 3 alternative?"],
+};
+const gen=["Scanning Jaipur for activities that fit the group's open time slots across all 3 days…","Found 3 options for Day 1 afternoon that avoid the timing conflict Riya flagged. The top pick is 2.8 km from your hotel. Want me to propose it to the group?","✅ Added to Day 2! Saurabh, Kashish, Arjun and Riya will see it in their feed now. Once 3 of them vote ✓ it'll be confirmed and locked in."];
+let gi=0;
+
+function addBubble(text,role){
+  const log=document.getElementById('chat-log');
+  const d=document.createElement('div');
+  d.className=`chat-bubble ${role}`;
+  if(role==='ai')d.innerHTML=`<div class="ai-tag">District AI</div>${text}`;
+  else d.textContent=text;
+  log.appendChild(d);log.scrollTop=log.scrollHeight;
+}
+
+function showTyping(){
+  const log=document.getElementById('chat-log');
+  const t=document.createElement('div');
+  t.className='chat-bubble ai';t.id='typing-ind';
+  t.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';
+  log.appendChild(t);log.scrollTop=log.scrollHeight;return t;
+}
+
+function selectMood(mood,btn){
+  document.querySelectorAll('.mood-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  addBubble(mood+' vibe 🎯','user');
+  const t=showTyping();
+  setTimeout(()=>{t.remove();addBubble((aiR[mood]||gen)[0],'ai');},900);
+}
+
+function sendChat(){
+  const inp=document.getElementById('chat-input');
+  const v=inp.value.trim();if(!v)return;
+  addBubble(v,'user');inp.value='';
+  const t=showTyping();
+  setTimeout(()=>{t.remove();addBubble(gen[gi%gen.length],'ai');gi++;},1100);
+}
+document.getElementById('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat();});
+</script>
+</body>
+</html>
